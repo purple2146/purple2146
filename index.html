@@ -1,5 +1,3 @@
-data_uri = "data:image/png;base64," + logo_b64
-
 HTML = r'''<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -196,7 +194,6 @@ body{
 <script>
 "use strict";
 
-/* ---------- 소품 정의 & 그림(SVG) ---------- */
 var NAMES = {hat:"검정 모자", rabbit:"흰 토끼", cup:"빨간 컵", tube:"주황 튜브", coin:"초록 코인"};
 var PROPS = ["hat","rabbit","cup","tube","coin"];
 
@@ -230,7 +227,6 @@ function svg(prop){
       +'</svg>';
   }
   if(prop==="tube"){
-    /* 위·아래 모두 뚫린 관 */
     return '<svg class="art" viewBox="0 0 100 100">'
       +'<rect x="34" y="24" width="32" height="56" fill="#f39423"/>'
       +'<ellipse cx="50" cy="80" rx="16" ry="6" fill="#d97b12"/>'
@@ -251,7 +247,6 @@ function svg(prop){
   return "";
 }
 
-/* 상태 입힌 그림 (card cell / result icon) */
 function artWithState(prop, state){
   var inner = svg(prop);
   var cls = (state==="gray") ? " st-gray" : "";
@@ -271,7 +266,6 @@ function artWithState(prop, state){
   return html;
 }
 
-/* ---------- 규칙 ---------- */
 var POSSIBLE = {
   hat:["color","star"], rabbit:["color","gray"],
   cup:["color","gray","star"], tube:["color","gray","star"], coin:["color","gray"]
@@ -285,7 +279,7 @@ function correctZone(present, state){
 
 function genCard(){
   for(var t=0;t<300;t++){
-    var k = 3 + Math.floor(Math.random()*3); // 3~5
+    var k = 3 + Math.floor(Math.random()*3);
     var pool = PROPS.slice();
     for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=pool[i];pool[i]=pool[j];pool[j]=tmp;}
     var present = pool.slice(0,k);
@@ -309,7 +303,6 @@ function genCard(){
   return {present:["hat","rabbit","cup"], states:{hat:"color",rabbit:"gray",cup:"color"}};
 }
 
-/* ---------- 존 정의 ---------- */
 var ZONES = [
   {id:"stack",  title:"위로 쌓기",           cls:"z-stack",   desc:"원래 색이 그대로 보이는 소품"},
   {id:"hide",   title:"안 보이게 숨겨서 쌓기", cls:"z-hide",    desc:"회색으로 그려진 소품"},
@@ -323,7 +316,6 @@ var REASON = {
   discard:"이 카드에는 그려져 있지 않은 소품이라 버려요."
 };
 
-/* ---------- 상태 ---------- */
 var card, assign, selected;
 
 function newCard(){
@@ -333,9 +325,7 @@ function newCard(){
   render();
 }
 
-/* ---------- 렌더 ---------- */
 function render(){
-  // 카드
   var grid = document.getElementById("cardGrid");
   grid.innerHTML = "";
   document.getElementById("cardSub").textContent = "소품 " + card.present.length + "개";
@@ -345,7 +335,6 @@ function render(){
     grid.appendChild(cell);
   });
 
-  // 트레이 (아직 배치 안 된 소품)
   var tray = document.getElementById("tray");
   tray.innerHTML="";
   PROPS.forEach(function(p){
@@ -357,7 +346,6 @@ function render(){
     tray.appendChild(el);
   });
 
-  // 존
   var zc=document.getElementById("zones"); zc.innerHTML="";
   ZONES.forEach(function(z){
     var el=document.createElement("div");
@@ -379,17 +367,14 @@ function render(){
   document.getElementById("checkBtn").disabled = !allPlaced;
 }
 
-/* ---------- 배치 조작 ---------- */
 function place(prop, zoneId){ assign[prop]=zoneId; selected=null; render(); }
 function unplace(prop){ assign[prop]=null; render(); }
 
-/* ---------- 드래그 (pointer) + 탭 ---------- */
 var drag=null, ghost=null, startX=0, startY=0, downProp=null, moved=false;
 
 function onDown(e){
   var pieceEl = e.target.closest("[data-prop]");
   if(!pieceEl) {
-    // 빈 존을 눌렀고 선택된 소품이 있으면 배치 (탭 모드)
     var zoneEl = e.target.closest("[data-zone]");
     if(zoneEl && selected){ place(selected, zoneEl.getAttribute("data-zone")); }
     return;
@@ -427,18 +412,16 @@ function onUp(e){
     var under=document.elementFromPoint(e.clientX,e.clientY);
     var z=under?under.closest("[data-zone]"):null;
     if(z){ place(prop, z.getAttribute("data-zone")); }
-    else { unplace(prop); } // 존 밖으로 놓으면 트레이로
+    else { unplace(prop); }
     return;
   }
-  // 탭
-  if(assign[prop]!==null){ unplace(prop); }        // 배치된 걸 톡 → 회수
-  else { selected = (selected===prop)? null : prop; render(); } // 트레이 소품 선택 토글
+  if(assign[prop]!==null){ unplace(prop); }
+  else { selected = (selected===prop)? null : prop; render(); }
 }
 document.addEventListener("pointerdown", function(e){
   if(e.target.closest(".wrap")) onDown(e);
 });
 
-/* ---------- 채점 ---------- */
 function check(){
   var list=document.getElementById("mList"); list.innerHTML="";
   var correct=0;
@@ -480,6 +463,14 @@ HTML = HTML.replace("__LOGO__", data_uri)
 out = "/home/user/topthat_practice.html"
 with open(out,"w",encoding="utf-8") as f:
     f.write(HTML)
-import os
+
+# --- 검증 ---
+with open(out, encoding="utf-8") as f:
+    content = f.read()
 print("saved:", out, round(os.path.getsize(out)/1024,1), "KB")
-print("logo embedded:", data_uri[:40], "...")
+print("placeholder __LOGO__ left?:", "__LOGO__" in content)   # False 여야 정상
+print("contains data:image?:", 'src="data:image/png;base64,' in content)  # True 여야 정상
+# img 태그 부분 발췌
+import re
+m = re.search(r'<img class="logo"[^>]{0,60}', content)
+print("img tag head:", m.group(0)[:70], "...")
